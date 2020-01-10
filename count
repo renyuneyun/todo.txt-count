@@ -1,0 +1,86 @@
+#!/bin/bash
+
+function usage {
+  echo " Handle count metadata in a todo item:"
+  echo "   count help"
+  echo "     show this help information"
+  echo "   count ITEM"
+  echo "     show how many of this item is left"
+  echo "   count ITEM done"
+  echo "     mark an item done and then re-enter it with a decreased (-1) count"
+  echo "   count ITEM -NUM"
+  echo "     mark NUM items as done at once and re-enter it with -NUM count"
+  exit
+}
+
+function error {
+  echo "Error! Usage:"
+  usage
+  exit 1
+}
+
+function print-count {
+  ITEM="$1"
+  LINE="$2"
+  COUNT="$3"
+
+  if [ ! -z "$LINE" ]; then
+    printf "%d\n" "$COUNT"
+  else
+    return 1
+  fi
+}
+
+function dodec {
+  ITEM="$1"
+  LINE="$2"
+  COUNT="$3"
+
+  if [ $COUNT -gt 1 ]; then
+    NEW_COUNT=$(echo "$COUNT - 1" | bc)
+    NEW_LINE=$(echo $LINE | sed "s/count:[[:digit:]]\\+/count:$NEW_COUNT/")
+  else
+    NEW_COUNT=0
+  fi
+
+  if [[ "$LINE" != "" ]]; then
+    "$TODO_FULL_SH" command do "$ITEM"
+    if [ $NEW_COUNT -gt 0 ]; then
+      "$TODO_FULL_SH" command add "$NEW_LINE"
+    fi
+  fi
+}
+
+shift
+action=$1
+
+[ "$action" = "help" ] && usage && exit
+
+ITEM=$1
+if ! [[ "$ITEM" =~ ^[0-9]+$ ]]; then
+  error
+fi
+
+LINE=$(sed "$ITEM!d" "$TODO_FILE")
+
+if echo "$LINE" | grep 'count:' &>/dev/null; then
+  COUNT=$(echo "$LINE" | sed 's/.*count:\([[:digit:]]\+.*\)/\1/')
+else
+  COUNT=1
+fi
+
+shift
+cmd=$1
+
+case $cmd in
+  '')
+    print-count "$ITEM" "$LINE" "$COUNT" || error
+    ;;
+  done)
+    dodec "$ITEM" "$LINE" "$COUNT" || error
+    ;;
+  *)
+    error
+    ;;
+esac
+
