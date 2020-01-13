@@ -1,16 +1,14 @@
 #!/bin/bash
 
 function usage {
-  echo " Handle count metadata in a todo item:"
-  echo "   count help"
-  echo "     show this help information"
-  echo "   count ITEM"
-  echo "     show how many of this item is left"
-  echo "   count ITEM done"
-  echo "     mark an item done and then re-enter it with a decreased (-1) count"
-  echo "   count ITEM -NUM"
-  echo "     mark NUM items as done at once and re-enter it with -NUM count"
-  exit
+  echo "    count help"
+  echo "      show help information"
+  echo "    count ITEM"
+  echo "      show how many of this item is left"
+  echo "    count ITEM done"
+  echo "      mark an item done and then re-enter it with a decreased (-1) count"
+  echo "    count ITEM -NUM"
+  echo "      mark NUM items as done at once and re-enter it with -NUM count"
 }
 
 function error {
@@ -51,10 +49,13 @@ function dodec {
   fi
 }
 
-shift
-action=$1
+[ "$1" = "usage" ] && usage && exit
 
-[ "$action" = "help" ] && usage && exit
+shift
+
+[ "$1" = "help" ] &&
+  echo "Handle count metadata in a todo item:" &&
+  usage && exit
 
 ITEM=$1
 if ! [[ "$ITEM" =~ ^[0-9]+$ ]]; then
